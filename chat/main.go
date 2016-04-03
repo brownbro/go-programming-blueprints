@@ -41,12 +41,22 @@ func main() {
 		google.New("158838570690-o1hndl14h6me61r7u0b3mepvk831gfeb.apps.googleusercontent.com", "Mly1zT1HSWNDkBOUZE1u9-Cn", "http://localhost:8080/auth/callback/google"),
 	)
 
-	r := newRoom()
+	r := newRoom(UseGravatar)
 	//r.tracer = trace.New(os.Stdout)
 	http.Handle("/chat", MustAuth(&templateHandler{filename: "chat.html"}))
 	http.Handle("/login", &templateHandler{filename: "login.html"})
 	http.HandleFunc("/auth/", loginHandler)
 	http.Handle("/room", r)
+	http.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
+		http.SetCookie(w, &http.Cookie{
+			Name: "auth",
+			Value: "",
+			Path: "/",
+			MaxAge: -1,
+		})
+		w.Header()["Location"] = []string{"/chat"}
+		w.WriteHeader(http.StatusTemporaryRedirect)
+	})
 
 	go r.run()
 
